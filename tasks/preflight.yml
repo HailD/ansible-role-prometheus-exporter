@@ -1,64 +1,39 @@
 ---
-- name: Assert usage of systemd as an init system
-  assert:
-    that: ansible_service_mgr == 'systemd'
-    msg: "This role only works with systemd"
-
-- name: Get systemd version
-  command: systemctl --version
-  changed_when: false
-  check_mode: false
-  register: __systemd_version
-  tags:
-    - skip_ansible_lint
-
-- name: Set systemd version fact
-  set_fact:
-    exporter_exporter_systemd_version: "{{ __systemd_version.stdout_lines[0] | regex_replace('^systemd\\s(\\d+).*$', '\\1') }}"
-
-- name: Check if exporter_exporter is installed
-  stat:
+- name: "preflight | Stat exporter_exporter binary"
+  ansible.builtin.stat:
     path: "/usr/local/bin/exporter_exporter"
-  register: __exporter_exporter_is_installed
-  check_mode: false
-  tags:
-    - exporter_exporter_install
+  register: "_prometheus_proxy_is_installed"
 
-
-- name: Check Exporter Exporter configuration defined
-  assert:
+- name: "preflight | Assert: prometheus_proxy_configuration is defined"
+  ansible.builtin.assert:
     that:
-      - exporter_exporter_configuration|length
+      - "prometheus_proxy_configuration"
+    fail_msg: "prometheus_proxy_configuration is empty"
+    quiet: true
 
-- name: Gather currently installed exporter_exporter version (if any)
-  command: "/usr/local/bin/exporter_exporter --version"
+- name: "preflight | Register exporter_exporter version"
+  ansible.builtin.shell:
+    cmd: >
+      set -o pipefail &&
+      /usr/local/bin/exporter_exporter --version 2>&1
+      | grep -oP 'Version: \K[0-9]+\.[0-9]+\.[0-9]+'
+  args:
+    executable: "/bin/bash"
   changed_when: false
-  register: __exporter_exporter_current_version_output
-  check_mode: false
-  when: __exporter_exporter_is_installed.stat.exists
-  tags:
-    - exporter_exporter_install
-    - skip_ansible_lint
+  failed_when: false
+  register: "_prometheus_proxy_current_version_output"
 
-- block:
-    - name: Get latest release
-      uri:
-        url: "https://api.github.com/repos/QubitProducts/exporter_exporter/releases/latest"
-        method: GET
-        return_content: true
-        status_code: 200
-        body_format: json
-        validate_certs: false
-        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
-        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
-      no_log: "{{ not lookup('env', 'MOLECULE_DEBUG') | bool }}"
-      register: _latest_release
-      until: _latest_release.status == 200
-      retries: 5
+- name: "Debug"
+  ansible.builtin.debug:
+    var: "_prometheus_proxy_current_version_output"
 
-    - name: "Set exporter_exporter version to {{ _latest_release.json.tag_name[1:] }}"
-      set_fact:
-        exporter_exporter_version: "{{ _latest_release.json.tag_name[1:] }}"
-  when: exporter_exporter_version == "latest"
-  delegate_to: localhost
-  run_once: true
+- name: "preflight | Set facts: _prometheus_proxy_installed_version"
+  ansible.builtin.set_fact:
+    _prometheus_proxy_installed_version: "{{ _prometheus_proxy_current_version_output.stdout }}"
+    _prometheus_proxy_is_installed: "{{ _prometheus_proxy_is_installed.stat.exists }}"
+
+- name: "Debug"
+  ansible.builtin.debug:
+    msg:
+      - "Installed: {{ _prometheus_proxy_is_installed }}"
+      - "Version: {{ _prometheus_proxy_installed_version | default('-') }}"

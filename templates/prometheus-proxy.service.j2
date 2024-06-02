@@ -1,0 +1,20 @@
+[Unit]
+Description="Prometheus Proxy (Exporter Exporter)"
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ prometheus_proxy_user }}
+Group={{ prometheus_proxy_group }}
+ExecStart=/usr/local/bin/exporter_exporter \
+{% for flag in prometheus_proxy_startup_flags %}
+  {{ flag }} {% if not loop.last %}\{% endif %}
+
+{% endfor %}
+
+SyslogIdentifier=prometheus-proxy
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

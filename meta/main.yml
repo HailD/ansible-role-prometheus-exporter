@@ -1,31 +1,15 @@
 ---
 galaxy_info:
-  author: Yoann DAVID
-  description: Prometheus Exporter Exporter
-  license: MIT
-  company: none
-  min_ansible_version: 2.7
-  platforms:
-    - name: Ubuntu
-      versions:
-        - bionic
-        - xenial
-    - name: Debian
-      versions:
-        - stretch
-        - buster
-    - name: EL
-      versions:
-        - 7
-        - 8
-    - name: Fedora
-      versions:
-        - 30
-        - 31
+  author: "kay"
+  role_name: "prometheus_proxy"
+  description: "Reverse proxy for prometheus exporters"
+  license: "MIT"
+  company: "none"
+  min_ansible_version: "2.7"
   galaxy_tags:
-    - monitoring
-    - prometheus
-    - exporter
-    - proxy
+    - "monitoring"
+    - "prometheus"
+    - "exporter"
+    - "proxy"
 
 dependencies: []

@@ -1,14 +1,86 @@
-extends: default
-ignore: |
-  .travis/
-  .travis.yml
-  meta/
+---
+yaml-files:
+  - "*.yaml"
+  - "*.yml"
+  - ".yamllint"
 
 rules:
+  anchors:
+    forbid-undeclared-aliases: true
+    forbid-duplicated-anchors: false
+    forbid-unused-anchors: false
   braces:
+    forbid: "non-empty"
+    min-spaces-inside: 1
     max-spaces-inside: 1
-    level: error
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
   brackets:
+    forbid: "non-empty"
+    min-spaces-inside: 1
     max-spaces-inside: 1
-    level: error
-  line-length: disable
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+  colons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+  commas:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 2
+  comments-indentation:
+    level: "error"
+  document-end: "disable"
+  document-start:
+    present: true
+  empty-lines:
+    max: 1
+    max-start: 0
+    max-end: 0
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: true
+    forbid-in-block-sequences: true
+  float-values:
+    forbid-inf: true
+    forbid-nan: true
+    forbid-scientific-notation: true
+    require-numeral-before-decimal: true
+  hyphens:
+    max-spaces-after: 1
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+  key-duplicates:
+    forbid-duplicated-merge-keys: false
+  key-ordering: "disable"
+  line-length:
+    level: "warning"
+    max: 200
+    allow-non-breakable-words: false
+    allow-non-breakable-inline-mappings: false
+  new-line-at-end-of-file: "enable"
+  new-lines:
+    type: "unix"
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: false
+  quoted-strings:
+    quote-type: "double"
+    required: true
+    extra-required: []
+    extra-allowed: []
+    allow-quoted-quotes: true
+    check-keys: false
+  trailing-spaces: "enable"
+  truthy:
+    level: "error"
+    allowed-values:
+      - "true"
+      - "false"
+    check-keys: true

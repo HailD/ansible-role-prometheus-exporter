@@ -1,60 +1,60 @@
 ---
-- name: Install dependencies
-  package:
-    name: "{{ item }}"
-    state: present
-  register: _install_dep_packages
-  until: _install_dep_packages is success
-  retries: 5
-  delay: 2
-  with_items: "{{ exporter_exporter_dependencies }}"
-
-- name: Create the exporter_exporter group
-  group:
-    name: "{{ exporter_exporter_system_group }}"
-    state: present
+- name: "install | Create group"
+  ansible.builtin.group:
+    name: "{{ prometheus_proxy_group }}"
+    state: "present"
     system: true
-  when: exporter_exporter_system_group != "root"
 
-- name: Create the exporter_exporter user
-  user:
-    name: "{{ exporter_exporter_system_user }}"
-    group: "{{ exporter_exporter_system_group }}"
-    groups: "{{ exporter_exporter_system_additional_groups }}"
-    append: true
-    shell: /usr/sbin/nologin
+- name: "install | Create user"
+  ansible.builtin.user:
+    name: "{{ prometheus_proxy_user }}"
+    group: "{{ prometheus_proxy_group }}"
+    shell: "/usr/sbin/nologin"
     system: true
     create_home: false
-    home: /
-  when: exporter_exporter_system_user != "root"
 
-- name: Download exporter_exporter binary to local folder
-  become: false
-  get_url:
-    url: "https://github.com/QubitProducts/exporter_exporter/releases/download/v{{ exporter_exporter_version }}/exporter_exporter-{{ exporter_exporter_version }}.linux-{{ go_arch }}.tar.gz"
-    dest: "/tmp/exporter_exporter-{{ exporter_exporter_version }}.linux-{{ go_arch }}.tar.gz"
-  register: _download_binary
-  until: _download_binary is succeeded
-  retries: 5
-  delay: 2
-  delegate_to: localhost
-  check_mode: false
+- name: "install | Download binary"
+  when: >
+    not _prometheus_proxy_is_installed
+    or prometheus_proxy_version != _prometheus_proxy_installed_version
+  block:
+    - name: "install | Create temporary directory"
+      ansible.builtin.tempfile:
+        state: "directory"
+      register: "_temp_dir"
 
-- name: Unpack exporter_exporter binary
-  become: false
-  unarchive:
-    src: "/tmp/exporter_exporter-{{ exporter_exporter_version }}.linux-{{ go_arch }}.tar.gz"
-    dest: "/tmp"
-    creates: "/tmp/exporter_exporter-{{ exporter_exporter_version }}.linux-{{ go_arch }}/exporter_exporter"
-  delegate_to: localhost
-  check_mode: false
+    - name: "install | Unpack exporter_exporter binary"
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "https://github.com/QubitProducts/exporter_exporter/releases/download/\
+          v{{ prometheus_proxy_version }}/exporter_exporter-{{ prometheus_proxy_version }}.linux-amd64.tar.gz"
+        dest: "{{ _temp_dir.path }}"
+        creates: "{{ _temp_dir.path }}/exporter_exporter-{{ prometheus_proxy_version }}.linux-amd64/exporter_exporter"
 
-- name: Propagate exporter_exporter binaries
-  copy:
-    src: "/tmp/exporter_exporter-{{ exporter_exporter_version }}.linux-{{ go_arch }}/exporter_exporter"
-    dest: "/usr/local/bin/exporter_exporter"
-    mode: 0755
-    owner: root
-    group: root
-  notify: restart exporter_exporter
-  when: not ansible_check_mode
+    - name: "install | Move exporter_exporter binary"
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ _temp_dir.path }}/exporter_exporter-{{ prometheus_proxy_version }}.linux-amd64/exporter_exporter"
+        dest: "/usr/local/bin/exporter_exporter"
+        mode: "0755"
+        owner: "root"
+        group: "root"
+      notify: "Restart service"
+
+- name: "install | Template the systemd service"
+  ansible.builtin.template:
+    src: "prometheus-proxy.service.j2"
+    dest: "/etc/systemd/system/prometheus-proxy.service"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify: "Restart service"
+
+- name: "install | Template prometheus proxy configuration"
+  ansible.builtin.template:
+    src: "templates/prometheus-proxy.yaml.j2"
+    dest: "/etc/expexp.yaml"
+    owner: "root"
+    group: "{{ prometheus_proxy_user }}"
+    mode: "0640"
+  notify: "Restart service"

@@ -1,7 +1,7 @@
 ---
-- name: restart exporter_exporter
+- name: "Restart service"
   become: true
-  systemd:
+  ansible.builtin.systemd:
+    name: "prometheus-proxy"
+    state: "restarted"
     daemon_reload: true
-    name: exporter_exporter
-    state: restarted

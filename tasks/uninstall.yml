@@ -1,0 +1,31 @@
+---
+- name: "Disable service"
+  ansible.builtin.systemd:
+    name: "prometheus-proxy"
+    enabled: false
+    state: "stopped"
+
+- name: "Delete service file"
+  ansible.builtin.file:
+    path: "/etc/systemd/system/prometheus-proxy.service"
+    state: "absent"
+
+- name: "Delete binary"
+  ansible.builtin.file:
+    path: "/usr/local/bin/prometheus-proxy"
+    state: "absent"
+
+- name: "Delete configuration file"
+  ansible.builtin.file:
+    path: "/etc/prometheus-proxy.yaml"
+    state: "absent"
+
+- name: "Delete user"
+  ansible.builtin.user:
+    name: "{{ prometheus_proxy_user }}"
+    state: "absent"
+
+- name: "Delete group"
+  ansible.builtin.group:
+    name: "{{ prometheus_proxy_group }}"
+    state: "absent"

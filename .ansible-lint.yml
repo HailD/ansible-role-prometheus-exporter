@@ -1,0 +1,22 @@
+---
+profile: "production"
+exclude_paths:
+  - ".cache/"
+  - ".github/"
+  - ".git/"
+  - "molecule/"
+  - "requirements.yml"
+parseable: true
+quiet: false
+strict: true
+loop_var_prefix: "^__"
+var_naming_pattern: "^[a-z_][a-z0-9_]*$"
+use_default_rules: true
+enable_list:
+  - "empty-string-compare"  # opt-in
+  - "no-log-password"  # opt-in
+  - "no-same-owner"  # opt-in
+  - "name[prefix]"  # opt-in
+  - "loop-var-prefix"
+  - "args"
+  - "yaml"

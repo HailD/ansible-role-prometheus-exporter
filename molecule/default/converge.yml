@@ -1,0 +1,20 @@
+---
+- name: "Converge"
+  hosts: "all"
+  vars:
+    prometheus_proxy_version: "0.5.0"
+    prometheus_proxy_configuration:
+      modules:
+        node:
+          method: "http"
+          http:
+            port: 9100
+        cadvisor:
+          method: "http"
+          http:
+            port: 9090
+
+  tasks:
+    - name: "Include ansible-role-prometheus-exporter"
+      ansible.builtin.include_role:
+        name: "ansible-role-prometheus-exporter"

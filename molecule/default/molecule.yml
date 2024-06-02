@@ -1,0 +1,24 @@
+---
+dependency:
+  name: "galaxy"
+
+driver:
+  name: "podman"
+
+platforms:
+  - name: "ansible-role-prometheus-exporter-default-ubuntu2404"
+    hostname: "prometheus-exporter"
+    # image: "molecule-dev:1.0.0"
+    image: "docker.io/geerlingguy/docker-ubuntu2404-ansible\
+      @sha256:6d080c40dbe21e7b83c0076684bf2b100e26f123385ed770a63770513cf09b4c"
+    privileged: true
+    pre_build_image: true
+    override_command: false
+
+provisioner:
+  name: "ansible"
+
+verifier:
+  name: "testinfra"
+  options:
+    verbose: true
